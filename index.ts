@@ -37,10 +37,46 @@ const wordCanBeSpelled = (letters: string[], word: string): boolean => {
   });
 };
 
+// const wordCanBeSpelled2 = (
+//   letters: string[],
+//   lettersOnTheBoard: string[],
+//   word: string,
+// ): boolean => {
+//   let lettersRemaining = [...letters];
+//   let canUseBoard = true;
+//   return word.split("").every((char) => {
+//     const idx: number = lettersRemaining.findIndex((value) => value === char);
+//     if (idx >= 0) {
+//       delete lettersRemaining[idx];
+//       return true;
+//     }
+//     const boardIdx: number = lettersOnTheBoard.findIndex((v) => v === char);
+//     if (boardIdx >= 0 && canUseBoard) {
+//       canUseBoard = false;
+//       return true;
+//     }
+//
+//     return false;
+//   });
+// };
+//
 const selectPossibleWords = (
   dictionary: string[],
   letters: string[],
-): string[] => dictionary.filter((word) => wordCanBeSpelled(letters, word));
+): string[] =>
+  dictionary.filter(
+    (word) => word.length >= 3 && wordCanBeSpelled(letters, word),
+  );
+// const selectRemainingPossibleWords = (
+//   dictionary: string[],
+//   letters: string[],
+//   //need a way to handle words that use two letters on the board still
+//   lettersOnBoard: string[],
+// ): string[] =>
+//   dictionary.filter(
+//     (word) =>
+//       word.length >= 3 && wordCanBeSpelled2(letters, lettersOnBoard, word),
+//   );
 
 // Top Left is the origin
 const GRID_BASE = 12;
@@ -71,23 +107,31 @@ const placeFirstWord = (solution: string[], word: string) => {
   return solution;
 };
 
+const initGameboard = (firstWord: string): string[] =>
+  placeFirstWord(makeGrid(), firstWord);
+
 type Direction = "horizontal" | "vertical";
-const placeWord = (grid: string[], coord: Coordinate, word: string) => {
-  const charAtCoord = grid[getIndexFromCoordinate(coord)];
+const placeWord = (
+  grid: string[],
+  coord: Coordinate,
+  word: string,
+  split: WordChar,
+): string[] => {
+  const newBoard = [...grid];
   const playableDir: Direction =
     grid[getIndexFromCoordinate({ ...coord, x: coord.x - 1 })] === "0" &&
     grid[getIndexFromCoordinate({ ...coord, x: coord.x + 1 })] === "0"
       ? "horizontal"
       : "vertical";
 
-  const letterIndex = [...word].findIndex((x) => x === charAtCoord);
+  const letterIndex = split.index;
   const beforeLetters = [...word].slice(0, letterIndex);
-  console.log(beforeLetters);
+  // console.log(beforeLetters);
   const afterLetters = [...word].slice(letterIndex + 1, word.length);
-  console.log(afterLetters);
+  // console.log(afterLetters);
   if (playableDir === "horizontal") {
     beforeLetters.forEach((char, idx) => {
-      grid[
+      newBoard[
         getIndexFromCoordinate({
           ...coord,
           x: coord.x - (beforeLetters.length - idx),
@@ -95,7 +139,7 @@ const placeWord = (grid: string[], coord: Coordinate, word: string) => {
       ] = char;
     });
     afterLetters.forEach((char, idx) => {
-      grid[
+      newBoard[
         getIndexFromCoordinate({
           ...coord,
           x: coord.x + (idx + 1),
@@ -105,7 +149,7 @@ const placeWord = (grid: string[], coord: Coordinate, word: string) => {
   }
   if (playableDir === "vertical") {
     beforeLetters.forEach((char, idx) => {
-      grid[
+      newBoard[
         getIndexFromCoordinate({
           ...coord,
           y: coord.y - (beforeLetters.length - idx),
@@ -113,7 +157,7 @@ const placeWord = (grid: string[], coord: Coordinate, word: string) => {
       ] = char;
     });
     afterLetters.forEach((char, idx) => {
-      grid[
+      newBoard[
         getIndexFromCoordinate({
           ...coord,
           y: coord.y + (idx + 1),
@@ -122,7 +166,7 @@ const placeWord = (grid: string[], coord: Coordinate, word: string) => {
     });
   }
 
-  return grid;
+  return newBoard;
 };
 
 // const turn = (grid: string[], letters: string[], validWords: string[]) => {
@@ -138,56 +182,166 @@ const placeWord = (grid: string[], coord: Coordinate, word: string) => {
 //   solution = placeWord(solution, startingWord);
 // };
 
-const solve = (
-  possibleWords: string[],
-  letters: string[],
-): string[] | false => {
-  let validSolution: string[] | false = false;
-  let startingWords = [...possibleWords];
-  while (!validSolution && startingWords.length > 0) {
-    let solution = makeGrid();
-    let remainingLetters = [...letters];
-    const startingWord = startingWords.pop();
-    remainingLetters = useLetters(remainingLetters, startingWord);
-    console.log(
-      "placing word",
-      startingWord,
-      "remaining letters",
-      remainingLetters,
-    );
-    solution = placeFirstWord(solution, startingWord);
-    if (remainingLetters.length === 0) {
-      validSolution = solution;
-    }
-    const lettersToPlayOff = [...startingWord];
-    while (!validSolution && lettersToPlayOff.length > 0) {
-      const letterToPlayOff = lettersToPlayOff.pop();
-      const wordsToTry = selectPossibleWords(
-        possibleWords.filter((word) => word.includes(letterToPlayOff)),
-        remainingLetters.concat([letterToPlayOff]),
-      );
-      while (!validSolution && wordsToTry.length > 0) {
-        const word = wordsToTry.pop();
-        console.log(
-          "placing second word",
-          word,
-          "remaining letters",
-          useLetters(remainingLetters, word),
-        );
-        // NOTE: this doesn't consider when there might be multiple instances of the letter to use on the board or more complex combinations of usable letters on the board
-        const coordinate = getCoordinateFromIndex(
-          solution.findIndex((x) => x === letterToPlayOff),
-        );
-        // Note: if a word has multiple instances of the letter already on the board, determining how they overlap is more complex than this
-        const result = placeWord(solution, coordinate, word);
-        // validSolution = result;
-        if (remainingLetters.length === 0) {
-          validSolution = solution;
-        }
-      }
-    }
+// const solve = (
+//   possibleWords: string[],
+//   letters: string[],
+// ): string[] | false => {
+//   let validSolution: string[] | false = false;
+//   let startingWords = [...possibleWords];
+//   while (!validSolution && startingWords.length > 0) {
+//     let solution = makeGrid();
+//     let remainingLetters = [...letters];
+//     const startingWord = startingWords.pop();
+//     remainingLetters = useLetters(remainingLetters, startingWord);
+//     console.log(
+//       "placing word",
+//       startingWord,
+//       "remaining letters",
+//       remainingLetters,
+//     );
+//     solution = placeFirstWord(solution, startingWord);
+//     if (remainingLetters.length === 0) {
+//       validSolution = solution;
+//     }
+//     const lettersToPlayOff = [...startingWord];
+//     while (!validSolution && lettersToPlayOff.length > 0) {
+//       const letterToPlayOff = lettersToPlayOff.pop();
+//       const wordsToTry = selectPossibleWords(
+//         possibleWords.filter((word) => word.includes(letterToPlayOff)),
+//         remainingLetters.concat([letterToPlayOff]),
+//       );
+//       while (!validSolution && wordsToTry.length > 0) {
+//         const word = wordsToTry.pop();
+//         console.log(
+//           "placing second word",
+//           word,
+//           "remaining letters",
+//           useLetters(remainingLetters, word),
+//         );
+//         // NOTE: this doesn't consider when there might be multiple instances of the letter to use on the board or more complex combinations of usable letters on the board
+//         const coordinate = getCoordinateFromIndex(
+//           solution.findIndex((x) => x === letterToPlayOff),
+//         );
+//         // Note: if a word has multiple instances of the letter already on the board, determining how they overlap is more complex than this
+//         const result = placeWord(solution, coordinate, word);
+//         // validSolution = result;
+//         if (remainingLetters.length === 0) {
+//           validSolution = solution;
+//         }
+//       }
+//     }
+//   }
+//   return validSolution;
+// };
+
+type GameState = {
+  board: string[];
+  unusedLetters: string[];
+  possibleWords: string[];
+  isValid: boolean;
+};
+
+type WordChar = { letter: string; index: number };
+
+const playWord = (gameState: GameState): GameState[] => {
+  if (gameState.unusedLetters.length === 0) {
+    return [gameState];
   }
-  return validSolution;
+  if (!gameState.isValid) {
+    return [];
+  }
+
+  const playableLetters: WordChar[] = gameState.board
+    .map((val, idx) => ({ letter: val, index: idx }))
+    .filter((val) => val.letter !== "0");
+
+  //TODO:after the flatmap, iterate through and check the validity
+  const newGameStates: GameState[] = playableLetters.flatMap((l) =>
+    playAtLetter(l, gameState),
+  );
+
+  // return newGameStates;
+  return newGameStates.flatMap(playWord);
+};
+
+const playAtLetter = (
+  playableLetter: WordChar,
+  gameState: GameState,
+): GameState[] => {
+  const words: string[] = gameState.possibleWords.filter(
+    (w) =>
+      w.includes(playableLetter.letter) &&
+      wordCanBeSpelled(
+        [...(gameState.unusedLetters + playableLetter.letter)],
+        w,
+      ),
+  );
+  return words.flatMap((wordToPlay) =>
+    placeWordAtLetter(wordToPlay, playableLetter, gameState),
+  );
+};
+const placeWordAtLetter = (
+  wordToPlay: string,
+  playableLetter: WordChar,
+  gameState: GameState,
+): GameState[] => {
+  const splits: WordChar[] = [...wordToPlay]
+    .map((letter, index) => ({ letter, index }))
+    .filter((l) => l.letter === playableLetter.letter);
+
+  return splits.map((split) => {
+    const newBoard = placeWord(
+      gameState.board,
+      getCoordinateFromIndex(playableLetter.index),
+      wordToPlay,
+      split,
+    );
+    const lettersRemaining = useLetters(gameState.unusedLetters, wordToPlay);
+    lettersRemaining.push(playableLetter.letter);
+    //TODO: I think we need to reduce the remaining playable words so that we dont get in an endless loop
+    // const playableWords = selectRemainingPossibleWords(
+    //   gameState.possibleWords,
+    //   lettersRemaining,
+    //   lettersOnBoard,
+    // );
+    //TODO: when we remove playable letters we should account for versions where we get an extra letter off the board (this needs to be addressed in general when deciding possible new words to spell too)
+    return {
+      ...gameState,
+      // possibleWords: playableWords,
+      board: newBoard,
+      unusedLetters: lettersRemaining,
+    };
+  });
+};
+
+// returns a bunch of gameboards
+const evaluateGameFromStartingWord = (
+  startingWord: string,
+  letters: string[],
+  possibleWords: string[],
+): GameState[] => {
+  const board = initGameboard(startingWord);
+  const unusedLetters = useLetters(letters, startingWord);
+  const gameState: GameState = {
+    board,
+    unusedLetters,
+    possibleWords,
+    isValid: true,
+  };
+  return playWord(gameState);
+};
+
+const solve = (possibleWords: string[], letters: string[]): GameState[] => {
+  console.log(possibleWords[0]);
+  return possibleWords
+    .slice(0, 1)
+    .flatMap((word) =>
+      evaluateGameFromStartingWord(word, letters, possibleWords),
+    )
+    .filter((result) => result.unusedLetters.length === 0);
+  // return possibleWords.flatMap((word) =>
+  //   evaluateGameFromStartingWord(word, letters, possibleWords),
+  // );
 };
 
 const main = (): void => {

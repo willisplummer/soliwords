@@ -1,12 +1,7 @@
 import fs from "fs";
-import {
-  getIndexFromCoordinate,
-  getCoordinateFromIndex,
-  Coordinate,
-} from "./coordinate-utils";
-import checkValidity from "./checkValidity";
 import { wordCanBeSpelled } from "./wordCanBeSpelled";
 import solve from "./solve";
+import { printGrid } from "./coordinate-utils";
 
 const DICE = [
   "NNHHRR",
@@ -47,7 +42,8 @@ const selectPossibleWords = (
   letters: string[],
 ): string[] =>
   dictionary.filter(
-    (word) => word.length >= 3 && wordCanBeSpelled(letters, word),
+    // TODO: this should be 3 but I'm trying 5 to see if it will not overflow
+    (word) => word.length >= 5 && wordCanBeSpelled(letters, word),
   );
 
 // returns a bunch of gameboards
@@ -73,17 +69,10 @@ const main = (): void => {
 
   console.log("Attempting Solution");
   const result = solve(possibleWords, letters);
-  console.log(
-    "Solution",
-    result.map((r) => r.board),
-  );
+  console.log(result.length, "Valid Solutions");
+  result.map((x) => x.board).forEach(printGrid);
 
   return;
 };
 
 main();
-
-// tests
-// passes wtih at least one solution when the 12 letters spell a 12 letter word
-// passes when the letters spell ABANDON with WORST running through it
-// etc

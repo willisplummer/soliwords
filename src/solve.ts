@@ -2,7 +2,9 @@ import checkValidity from "./checkValidity";
 import {
   getCoordinateFromIndex,
   getIndexFromCoordinate,
+  makeGrid,
   Coordinate,
+  INITIAL_COORDINATE,
 } from "./coordinate-utils";
 import { wordCanBeSpelled } from "./wordCanBeSpelled";
 
@@ -13,7 +15,6 @@ export const solve = (
   return possibleWords.flatMap((word) =>
     evaluateGameFromStartingWord(word, letters, possibleWords),
   );
-  // .filter((result) => result.unusedLetters.length === 0);
 };
 
 const evaluateGameFromStartingWord = (
@@ -53,7 +54,10 @@ export const useLetters = (
 };
 
 const placeFirstWord = (solution: string[], word: string) => {
-  const initialCoord: Coordinate = { x: 6 - Math.floor(word.length / 2), y: 5 };
+  const initialCoord: Coordinate = {
+    ...INITIAL_COORDINATE,
+    x: INITIAL_COORDINATE.x - Math.floor(word.length / 2),
+  };
   word.split("").forEach((char, idx) => {
     solution[
       getIndexFromCoordinate({ ...initialCoord, x: initialCoord.x + idx })
@@ -62,7 +66,6 @@ const placeFirstWord = (solution: string[], word: string) => {
   return solution;
 };
 
-const makeGrid = (): string[] => new Array(144).fill("0");
 const initGameboard = (firstWord: string): string[] =>
   placeFirstWord(makeGrid(), firstWord);
 
@@ -82,9 +85,7 @@ const placeWord = (
 
   const letterIndex = split.index;
   const beforeLetters = [...word].slice(0, letterIndex);
-  // console.log(beforeLetters);
   const afterLetters = [...word].slice(letterIndex + 1, word.length);
-  // console.log(afterLetters);
   if (playableDir === "horizontal") {
     beforeLetters.forEach((char, idx) => {
       newBoard[
@@ -146,7 +147,6 @@ const playWord = (gameState: GameState): GameState[] => {
     .map((val, idx) => ({ letter: val, index: idx }))
     .filter((val) => val.letter !== "0");
 
-  //TODO:after the flatmap, iterate through and check the validity
   const newGameStates: GameState[] = playableLetters
     .flatMap((l) => playAtLetter(l, gameState))
     .map((s) => ({
@@ -154,7 +154,6 @@ const playWord = (gameState: GameState): GameState[] => {
       isValid: checkValidity(gameState.possibleWords, s.board),
     }));
 
-  // return newGameStates;
   return newGameStates.flatMap(playWord);
 };
 
@@ -195,7 +194,6 @@ const placeWordAtLetter = (
     ]);
     return {
       ...gameState,
-      // possibleWords: playableWords,
       board: newBoard,
       unusedLetters: lettersRemaining,
     };

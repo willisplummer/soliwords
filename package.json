@@ -4,7 +4,7 @@
   "main": "index.ts",
   "scripts": {
     "start": "tsc && node dist/index.js",
-    "test": "jest"
+    "test": "rm -rf dist && jest"
   },
   "keywords": [],
   "author": "",

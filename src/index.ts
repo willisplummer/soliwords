@@ -69,7 +69,10 @@ const main = (): void => {
   const result = solve(possibleWords, letters);
   console.log(result.length, "Valid Solutions");
 
-  result.forEach((x) => printGrid(x.board));
+  result.forEach((x) => {
+    printGrid(x.board);
+    console.log(x.wordsUsed);
+  });
 };
 
 main();

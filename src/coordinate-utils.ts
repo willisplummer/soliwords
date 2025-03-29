@@ -13,7 +13,7 @@ export const getCoordinateFromIndex = (idx: number): Coordinate => {
   return { x: idx % GRID_BASE, y: Math.floor(idx / GRID_BASE) };
 };
 export const getIndexBelow = (idx: number): number | null => {
-  if ((idx + 1) / GRID_BASE > 11) {
+  if ((idx + 1) / GRID_BASE > GRID_BASE - 1) {
     return null;
   }
   return idx + GRID_BASE;

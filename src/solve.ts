@@ -28,6 +28,7 @@ const evaluateGameFromStartingWord = (
     board,
     unusedLetters,
     possibleWords,
+    wordsUsed: [startingWord],
     isValid: checkValidity(possibleWords, board),
   };
   return playWord(gameState);
@@ -131,6 +132,7 @@ type GameState = {
   unusedLetters: string[];
   possibleWords: string[];
   isValid: boolean;
+  wordsUsed: string[];
 };
 
 type WordChar = { letter: string; index: number };
@@ -196,6 +198,7 @@ const placeWordAtLetter = (
       ...gameState,
       board: newBoard,
       unusedLetters: lettersRemaining,
+      wordsUsed: [...gameState.wordsUsed, wordToPlay],
     };
   });
 };

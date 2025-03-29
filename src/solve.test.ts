@@ -1,5 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 import { solve, useLetters } from "./solve";
+import { printGrid } from "./coordinate-utils";
 
 describe("solve", () => {
   test("It should place the word (only one word)", () => {
@@ -63,6 +64,12 @@ describe("solve", () => {
   test("It should return all possible valid game boards (two words)", () => {
     const result = solve(["RIFLE", "FIRE"], [..."RIFLEIRE"]);
     expect(result.length).toBe(2);
+  });
+
+  // TODO: this was a result I got from running the program but here I can't reproduce it
+  test("It should not place letters on top of each other", () => {
+    const result = solve(["LYCH", "MARVY", "BOTHY"], [..."HLCMYOHVATRB"]);
+    expect(result.length).toBe(0);
   });
 });
 

@@ -12,9 +12,11 @@ export const solve = (
   possibleWords: string[],
   letters: string[],
 ): GameState[] => {
-  return possibleWords.flatMap((word) =>
-    evaluateGameFromStartingWord(word, letters, possibleWords),
-  );
+  return possibleWords
+    .flatMap((word) =>
+      evaluateGameFromStartingWord(word, letters, possibleWords),
+    )
+    .filter((r) => r.unusedLetters.length === 0);
 };
 
 const evaluateGameFromStartingWord = (
@@ -29,7 +31,6 @@ const evaluateGameFromStartingWord = (
     unusedLetters,
     possibleWords,
     wordsUsed: [startingWord],
-    isValid: checkValidity(possibleWords, board),
   };
   return playWord(gameState);
 };
@@ -76,13 +77,24 @@ const placeWord = (
   coord: Coordinate,
   word: string,
   split: WordChar,
-): string[] => {
+): string[] | null => {
   const newBoard = [...grid];
-  const playableDir: Direction =
+  let playableDir: Direction | null = null;
+  // TODO: this doesn't account for playing off a word running against the edge of the board - with the bigger grid, maybe this is fine/can't happen
+  if (
     grid[getIndexFromCoordinate({ ...coord, x: coord.x - 1 })] === "0" &&
     grid[getIndexFromCoordinate({ ...coord, x: coord.x + 1 })] === "0"
-      ? "horizontal"
-      : "vertical";
+  ) {
+    playableDir = "horizontal";
+  }
+  if (
+    grid[getIndexFromCoordinate({ ...coord, y: coord.y - 1 })] === "0" &&
+    grid[getIndexFromCoordinate({ ...coord, y: coord.y + 1 })] === "0"
+  ) {
+    playableDir = "vertical";
+  }
+
+  if (!playableDir) return null;
 
   const letterIndex = split.index;
   const beforeLetters = [...word].slice(0, letterIndex);
@@ -131,7 +143,6 @@ type GameState = {
   board: string[];
   unusedLetters: string[];
   possibleWords: string[];
-  isValid: boolean;
   wordsUsed: string[];
 };
 
@@ -141,9 +152,6 @@ const playWord = (gameState: GameState): GameState[] => {
   if (gameState.unusedLetters.length === 0) {
     return [gameState];
   }
-  if (!gameState.isValid) {
-    return [];
-  }
 
   const playableLetters: WordChar[] = gameState.board
     .map((val, idx) => ({ letter: val, index: idx }))
@@ -151,10 +159,7 @@ const playWord = (gameState: GameState): GameState[] => {
 
   const newGameStates: GameState[] = playableLetters
     .flatMap((l) => playAtLetter(l, gameState))
-    .map((s) => ({
-      ...s,
-      isValid: checkValidity(gameState.possibleWords, s.board),
-    }));
+    .filter((s) => checkValidity(gameState.possibleWords, s.board));
 
   return newGameStates.flatMap(playWord);
 };
@@ -175,6 +180,7 @@ const playAtLetter = (
     placeWordAtLetter(wordToPlay, playableLetter, gameState),
   );
 };
+
 const placeWordAtLetter = (
   wordToPlay: string,
   playableLetter: WordChar,
@@ -184,23 +190,28 @@ const placeWordAtLetter = (
     .map((letter, index) => ({ letter, index }))
     .filter((l) => l.letter === playableLetter.letter);
 
-  return splits.map((split) => {
-    const newBoard = placeWord(
-      gameState.board,
-      getCoordinateFromIndex(playableLetter.index),
-      wordToPlay,
-      split,
-    );
-    const lettersRemaining = useLetters(gameState.unusedLetters, wordToPlay, [
-      playableLetter.letter,
-    ]);
-    return {
-      ...gameState,
-      board: newBoard,
-      unusedLetters: lettersRemaining,
-      wordsUsed: [...gameState.wordsUsed, wordToPlay],
-    };
-  });
+  return splits
+    .map((split) => {
+      const result: string[] | null = placeWord(
+        gameState.board,
+        getCoordinateFromIndex(playableLetter.index),
+        wordToPlay,
+        split,
+      );
+      if (result === null) {
+        return null;
+      }
+      const lettersRemaining = useLetters(gameState.unusedLetters, wordToPlay, [
+        playableLetter.letter,
+      ]);
+      return {
+        ...gameState,
+        board: result,
+        unusedLetters: lettersRemaining,
+        wordsUsed: [...gameState.wordsUsed, wordToPlay],
+      };
+    })
+    .filter((r) => !!r);
 };
 
 export default solve;

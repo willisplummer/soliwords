@@ -38,7 +38,7 @@ export const printGrid = (array: string[]): void => {
       const index = row * GRID_BASE + col;
       rowString += array[index] + " ";
     }
-    console.log(rowString.trim());
+    process.stdout.write(rowString.trim() + "\n");
   }
-  console.log("------------");
+  process.stdout.write("------------\n");
 };

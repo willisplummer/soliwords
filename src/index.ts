@@ -42,7 +42,7 @@ const selectPossibleWords = (
   letters: string[],
 ): string[] =>
   dictionary.filter(
-    // TODO: this should be 3 but I'm trying 4 to see if it will not overflow
+    // TODO: this should be 3, but I haven't optimized the algorithm to not cause stack overflows
     (word) => word.length >= 4 && wordCanBeSpelled(letters, word),
   );
 

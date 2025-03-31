@@ -42,8 +42,7 @@ const selectPossibleWords = (
   letters: string[],
 ): string[] =>
   dictionary.filter(
-    // TODO: this should be 3, but I haven't optimized the algorithm to not cause stack overflows
-    (word) => word.length >= 4 && wordCanBeSpelled(letters, word),
+    (word) => word.length >= 3 && wordCanBeSpelled(letters, word),
   );
 
 // returns a bunch of gameboards

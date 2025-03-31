@@ -23,3 +23,4 @@ A program that will find all valid crossword solitaire solutions given a set of 
 - [ ] I'd like for it to tell you the definition of each word used in the solution (as a sanity check and also so I don't have to google them constantly)
 - [ ] Would be cool to eliminate duplicate solutions (e.g. same answer but just rotated, If you can solve with three words, do we really care how many permutations on how to connect them there are?)
 - [ ] make it faster
+- [ ] make it more efficient with memory (shouldn't need 4GB of RAM for this)

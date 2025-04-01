@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "start": "tsc && node dist/index.js",
+    "start": "tsc && node --max-old-space-size=4096 dist/index.js",
     "debug": "tsc && node --inspect-brk dist/index.js",
     "test": "rm -rf dist && jest --verbose=false"
   },

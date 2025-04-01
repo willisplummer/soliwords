@@ -32,7 +32,14 @@ const evaluateGameFromStartingWord = (
     possibleWords,
     wordsUsed: [startingWord],
   };
-  return playWord(gameState);
+
+  let keepSolving = true;
+  let newState: GameState[] = [gameState];
+  while (keepSolving) {
+    newState = newState.flatMap(playWord);
+    keepSolving = newState.some((state) => state.unusedLetters.length > 0);
+  }
+  return newState;
 };
 
 // Top Left is the origin
@@ -149,6 +156,22 @@ type GameState = {
 type WordChar = { letter: string; index: number };
 
 const playWord = (gameState: GameState): GameState[] => {
+  if (gameState.unusedLetters.length === 0) {
+    return [gameState];
+  }
+
+  const playableLetters: WordChar[] = gameState.board
+    .map((val, idx) => ({ letter: val, index: idx }))
+    .filter((val) => val.letter !== "0");
+
+  const newGameStates: GameState[] = playableLetters
+    .flatMap((l) => playAtLetter(l, gameState))
+    .filter((s) => checkValidity(gameState.possibleWords, s.board));
+
+  return newGameStates;
+};
+
+const playWordCopy = (gameState: GameState): GameState[] => {
   if (gameState.unusedLetters.length === 0) {
     return [gameState];
   }
